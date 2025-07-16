@@ -1,0 +1,4 @@
+streamlit~=1.45.1
+psycopg2-binary~=2.9.9
+bcrypt~=4.3.0
+watchdog~=6.0.0

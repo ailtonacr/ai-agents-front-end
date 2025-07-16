@@ -1,0 +1,50 @@
+networks:
+  frontend_net:
+    driver: bridge
+
+volumes:
+  postgres_data:
+
+services:
+  db:
+    image: postgres:15
+    container_name: ai_agents_frontend_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: chat_db
+      POSTGRES_USER: dev
+      POSTGRES_PASSWORD: dev
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - frontend_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dev -d chat_db"]
+      timeout: 20s
+      retries: 10
+      interval: 10s
+      start_period: 30s
+
+  frontend:
+    build:
+      context: .
+    container_name: ai_agents_frontend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - POSTGRES_HOST=db
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=dev
+      - POSTGRES_PASSWORD=dev
+      - POSTGRES_DATABASE=chat_db
+      - API_BASE_URL=${API_BASE_URL:-http://host.docker.internal:8000}
+    ports:
+      - "8501:8501"
+    volumes:
+      - .:/app
+    networks:
+      - frontend_net
